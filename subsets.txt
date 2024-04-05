@@ -1,0 +1,106 @@
+Test test1_subset0_quit ("seq 1 5 | python3 -s -S slippy '3q'") - passed
+Test test2_subset0_quit ("seq 9 20 | python3 -s -S slippy '3q'") - passed
+Test test3_subset0_quit ('seq 42 44 | python3 -s -S slippy 1q') - passed
+Test test4_subset0_quit ('python3 -s -S slippy 10q < dictionary.txt') - passed
+Test test5_subset0_quit ('seq 41 43 | python3 -s -S slippy 4q') - passed
+Test test6_subset0_quit ('yes | python3 -s -S slippy 3q') - passed
+Test test7_subset0_quit ('seq 90 110 | python3 -s -S slippy /.1/q') - passed
+Test test8_subset0_quit ("seq 10 15 | python3 -s -S slippy '/.1/q'") - passed
+Test test9_subset0_quit ("seq 500 600 | python3 -s -S slippy '/^.+5$/q'") - passed
+Test test10_subset0_quit ("seq 100 1000 | python3 -s -S slippy '/13/q'") - passed
+Test test11_subset0_quit ("python3 -s -S slippy '/r.*v/q' < dictionary.txt") - passed
+Test test12_subset0_quit ('seq 10 100 | python3 -s -S slippy /^2/q') - passed
+Test test13_subset0_quit ("python3 -s -S slippy '/.10/q' < dictionary.txt") - passed
+Test test14_subset0_quit ("python3 -s -S slippy '/b.6b/q' < dictionary.txt") - passed
+Test test15_subset0_print ("seq 1 5 | python3 -s -S slippy '2p'") - passed
+Test test16_subset0_print ("seq 7 11 | python3 -s -S slippy '4p'") - passed
+Test test17_subset0_print ('seq 41 43 | python3 -s -S slippy 2p') - passed
+Test test18_subset0_print ('head dictionary.txt | python3 -s -S slippy 3p') - passed
+Test test19_subset0_print ("head dictionary.txt | python3 -s -S slippy '/s$/p'") - passed
+Test test20_subset0_print ("seq 1 5 | python3 -s -S slippy -n '3p'") - passed
+Test test21_subset0_print ("head -n 1000 dictionary.txt | python3 -s -S slippy -n '/z.$/p'") - passed
+Test test22_subset0_print ('seq 41 43 | python3 -s -S slippy -n 2p') - passed
+Test test23_subset0_print ('python3 -s -S slippy -n 42p < dictionary.txt') - passed
+Test test24_subset0_print ("seq 65 85 | python3 -s -S slippy '/^7/p'") - passed
+Test test25_subset0_print ("seq 2 3 20 | python3 -s -S slippy -n '/^1/p'") - passed
+Test test26_subset0_print ("seq 1 5 | python3 -s -S slippy 'p'") - passed
+Test test27_subset0_delete ("seq 1 5 | python3 -s -S slippy '4d'") - passed
+Test test28_subset0_delete ("seq 1 5 | python3 -s -S slippy '1d'") - passed
+Test test29_subset0_delete ("seq 1 100 | python3 -s -S slippy '/.2/d'") - passed
+Test test30_subset0_delete ("seq 11 20 | python3 -s -S slippy '/[2468]/d'") - passed
+Test test31_subset0_delete ("seq 11 100 | python3 -s -S slippy '/[2468]/d'") - passed
+Test test32_subset0_delete ("seq 1 5 | python3 -s -S slippy -n '1d'") - passed
+Test test33_subset0_delete ("seq 1 1000 | python3 -s -S slippy 'd'") - passed
+Test test34_subset0_substitute ("seq 1 5 | python3 -s -S slippy 's/[15]/zzz/'") - passed
+Test test35_subset0_substitute ("seq 10 20 | python3 -s -S slippy 's/[15]/zzz/'") - passed
+Test test36_subset0_substitute ("seq 100 111 | python3 -s -S slippy 's/11/zzz/'") - passed
+Test test37_subset0_substitute ('echo "Hello Andrew" | python3 -s -S slippy \'s/e//\'') - passed
+Test test38_subset0_substitute ('echo "Hello Andrew" | python3 -s -S slippy \'s/e//g\'') - passed
+Test test39_subset0_substitute ("head dictionary.txt | python3 -s -S slippy 's/a//g'") - passed
+Test test40_subset0_substitute ("seq 11 19 | python3 -s -S slippy '5s/1/2/'") - passed
+Test test41_subset0_substitute ("seq 51 60 | python3 -s -S slippy '5s/5/9/g'") - passed
+Test test42_subset0_substitute ("seq 100 111 | python3 -s -S slippy '/1.1/s/1/-/g'") - passed
+Test test43_subset1_addresses ("seq 1 5 | python3 -s -S slippy '$d'") - passed
+Test test44_subset1_addresses ("seq 0 10 100 | python3 -s -S slippy '$p'") - passed
+Test test45_subset1_addresses ("seq 1 10000 | python3 -s -S slippy -n '$p'") - passed
+Test test46_subset1_addresses ("python3 -s -S slippy -n '$p' < dictionary.txt") - passed
+Test test47_subset1_addresses ('seq 42 44 | python3 -s -S slippy 2,3d') - failed (errors)
+Test test48_subset1_addresses ('seq 10 21 | python3 -s -S slippy 3,/2/d') - failed (errors)
+Test test49_subset1_addresses ('seq 10 21 | python3 -s -S slippy /2/,7d') - failed (Incorrect output)
+Test test50_subset1_addresses ('seq 10 21 | python3 -s -S slippy /2/,/7/d') - failed (Incorrect output)
+Test test51_subset1_addresses ("seq 10 21 | python3 -s -S slippy '/1$/,/^2/d'") - failed (Incorrect output)
+Test test52_subset1_addresses ("seq 10 30 | python3 -s -S slippy '/4/,/6/s/[12]/9/'") - failed (Incorrect output)
+Test test53_subset1_addresses ("seq 0 10 200 | python3 -s -S slippy '/4/,/6/s/0/-/g'") - failed (Incorrect output)
+Test test54_subset1_addresses ("seq 10 40 | python3 -s -S slippy '/2/,4p'") - failed (Incorrect output)
+Test test55_subset1_substitute ("seq 1 5 | python3 -s -S slippy 'sX[15]XzzzX'") - passed
+Test test56_subset1_substitute ("seq 1 5 | python3 -s -S slippy 's?[15]?zzz?'") - passed
+Test test57_subset1_substitute ("seq 1 5 | python3 -s -S slippy 's_[15]_zzz_'") - passed
+Test test58_subset1_substitute ("seq 1 5 | python3 -s -S slippy 'sX[15]Xz/z/zX'") - passed
+Test test59_subset1_multiple_commands ("seq 1 5 | python3 -s -S slippy '4q;/2/d'") - passed
+Test test60_subset1_multiple_commands ("seq 1 5 | python3 -s -S slippy '/2/d;4q'") - passed
+Test test61_subset1_multiple_commands ("seq 1 10 | python3 -s -S slippy '5d;5q'") - passed
+Test test62_subset1_multiple_commands ("seq 1 20 | python3 -s -S slippy '/2$/,/8$/d;4,6p'") - failed (errors)
+Test test63_subset1_multiple_commands ("seq 1 100 | python3 -s -S slippy -n '1,/.1/p;/5/,/9/s/.//;/.2/,/.9/p;85q'") - failed (errors)
+Test test64_subset1_multiple_commands ("seq 1 13 | python3 -s -S slippy '/2/p;s/2/*/'") - passed
+Test test65_subset1_multiple_commands ("seq 1 13 | python3 -s -S slippy 's/2/*/;/2/p'") - passed
+Test test66_subset1_-f ("echo '4q' > commandsFile\nseq 1 5 | python3 -s -S slippy -f commandsFile") - passed
+Test test67_subset1_-f ("echo '$q' > commandsFile\nseq 1 5 | python3 -s -S slippy -f commandsFile") - passed
+Test test68_subset1_-f ("echo '$q;/2/d' > commandsFile\nseq 1 5 | python3 -s -S slippy -f commandsFile") - passed
+Test test69_subset1_-f ('echo 4q    > commandsFile\necho /2/d >> commandsFile\nseq 1 5 | python3 -s -S slippy -f commandsFile') - passed
+Test test70_subset1_-f ('echo /2/d > commandsFile\necho 4q  >> commandsFile\nseq 1 5 | python3 -s -S slippy -f commandsFile') - passed
+Test test71_subset1_-f ("echo '1,/.1/p;/5/,/9/s/.//' > commandsFile\necho '/.2/,/.9/p;85q'    >> commandsFile\nseq 1 100 | python3 -s -S slippy -n -f commandsFile") - failed (errors)
+Test test72_subset1_input_files ("seq 1 2 > two.txt\nseq 1 5 > five.txt\npython3 -s -S slippy '4q;/2/d' two.txt five.txt") - passed
+Test test73_subset1_input_files ("seq 1 2 > two.txt\nseq 1 5 > five.txt\npython3 -s -S slippy '4q;/2/d' five.txt two.txt") - passed
+Test test74_subset1_input_files ("seq 1 2 > two.txt\nseq 1 5 > five.txt\npython3 -s -S slippy '/2/d;4q' two.txt five.txt") - passed
+Test test75_subset1_input_files ('echo 4q    > commandsFile\necho /2/d >> commandsFile\nseq 1 2 > two.txt\nseq 1 5 > five.txt\npython3 -s -S slippy -f commandsFile five.txt two.txt') - passed
+Test test76_subset1_input_files ('echo 4q    > commandsFile\necho /2/d >> commandsFile\nseq 1 2    > two.txt\nseq 1 5    > five.txt\npython3 -s -S slippy -f commandsFile two.txt five.txt') - passed
+Test test77_subset1_input_files ('echo /2/d > commandsFile\necho 4q  >> commandsFile\nseq 1 2   > two.txt\nseq 1 5   > five.txt\npython3 -s -S slippy -f commandsFile two.txt five.txt') - passed
+Test test78_subset1_input_files ("python3 -s -S slippy -n '10p;$p' dictionary.txt") - passed
+Test test79_subset1_whitespace ("seq 24 42 | python3 -s -S slippy ' 3, 17  d  # comment'") - failed (Incorrect output)
+Test test80_subset1_whitespace ("seq 24 43 | python3 -s -S slippy '/2/d # delete  ;  4  q # quit'") - failed (Incorrect output)
+Test test81_subset1_whitespace ("seq 10 21 | python3 -s -S slippy '  /1$/  ,   /^2/    d # comment'") - failed (Incorrect output)
+Test test82_subset1_whitespace ("echo '/2/    d # comment' > commandsFile\necho '# comment'         >> commandsFile\necho '4    q'            >> commandsFile\nseq 1 2   > two.txt\nseq 1 5   > five.txt\npython3 -s -S slippy -f commandsFile two.txt five.txt") - failed (errors)
+Test test83_subset2_-i ('seq 1 5 > five.txt\npython3 -s -S slippy -i /[24]/d five.txt\ncat five.txt') - failed (Incorrect output)
+Test test84_subset2_-i ("seq 1 5 > five.txt\necho '/[24]/d' > commandsFile\npython3 -s -S slippy -i -f commandsFile five.txt\ncat five.txt") - failed (Incorrect output)
+Test test85_subset2_multiple_commands ("echo 'Punctuation characters include . , ; :' | python3 -s -S slippy 's/;/semicolon/g;/;/q'") - failed (errors)
+Test test86_subset2_substitute ("seq 1 5 | python3 -s -S slippy 's/[15]/z\\/z\\/z/'") - failed (errors)
+Test test87_subset2_substitute ("seq 1 5 | python3 -s -S slippy 's_[15]_z\\_z\\_z_'") - failed (errors)
+Test test88_subset2_substitute ("seq 1 5 | python3 -s -S slippy 's1[\\15]1zzz1'") - failed (errors)
+Test test89_subset2_append ("seq 1 5 | python3 -s -S slippy '3a hello'") - failed (Incorrect output)
+Test test90_subset2_append ("seq 1 5 | python3 -s -S slippy '$a hello'") - failed (errors)
+Test test91_subset2_append ("seq 1 5 | python3 -s -S slippy 'a hello'") - failed (errors)
+Test test92_subset2_append ("head dictionary.txt | python3 -s -S slippy '/s$/a hello'") - failed (Incorrect output)
+Test test93_subset2_append ("head dictionary.txt | python3 -s -S slippy '/.3/a hello'") - passed
+Test test94_subset2_append ("seq 1 5 | python3 -s -S slippy '3i hello'") - failed (Incorrect output)
+Test test95_subset2_append ("seq 1 5 | python3 -s -S slippy '$i hello'") - failed (errors)
+Test test96_subset2_append ("seq 1 5 | python3 -s -S slippy 'i hello'") - failed (errors)
+Test test97_subset2_append ("head dictionary.txt | python3 -s -S slippy '/s$/i hello'") - failed (Incorrect output)
+Test test98_subset2_append ("head dictionary.txt | python3 -s -S slippy '/.3/i hello'") - passed
+Test test99_subset2_change ("head dictionary.txt | python3 -s -S slippy '/.3/c hello'") - passed
+Test test100_subset2_change ("head dictionary.txt | python3 -s -S slippy '/.3/,/.5/c hello'") - passed
+Test test101_subset2_branch ("echo 1000001 | python3 -s -S slippy ': start; s/00/0/; t start'") - failed (errors)
+Test test102_subset2_branch ("echo 0123456789 | python3 -s -S slippy -n 'p; : begin;s/[^ ](.)/ \\1/; t skip; q; : skip; p; b begin'") - failed (Incorrect output)
+Test test103_subset2_branch ("printf '101011\\n0110' | python3 -s -S slippy -f binary2words.script") - failed (errors)
+Test test104_subset2_branch ('head dictionary.txt | python3 -s -S slippy -f rev.script') - failed (errors)
+Test test105_subset2_branch ('seq 250 260 | python3 -s -S slippy -f decimal2binary.script') - failed (errors)
+71 tests passed 34 tests failed

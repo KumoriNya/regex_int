@@ -1,0 +1,19 @@
+address range cases
+format: A,B<command>
+    where A, B can be either an integer address, or a regex matching condition
+cases:
+    1. A < B:
+        apply command from A to B
+    2. A = B / A > B:
+        the same as A<command>
+
+
+potential mechanism:
+    try_do(A, B, input_string, address)
+        if A begin match input_string:
+            operate command
+            if A >= B:
+                remove B
+        elif A matched input_string_previous and B match input_string:
+            operate command
+            stop

@@ -1,0 +1,374 @@
+#! /usr/bin/env python3
+
+import sys
+import re
+
+def error_check(error_type, to_check):
+    if error_type == "usage":
+        if len(to_check) < 2:
+            print("usage: slippy [-i] [-n] [-f <script-file> | <sed-command>] [<files>...]")
+            exit(1)
+
+def find_range(list_of_partial_cmd, delimiter):
+    range1 = ""
+    range2 = ""
+    r1_found = False
+    r2_found = False
+    # print(list_of_partial_cmd)
+    for element in list_of_partial_cmd:
+        # print(f"current ele: '{element}'")
+        if not r1_found:
+            range1 += element
+            if isinstance(range1, int):
+                # print(f"range 1 is int, found '{range1}'")
+                r1_found = True
+            elif len(range1) > 1 and range1.endswith(delimiter):
+                # print(f"range 1 found '{range1}'")
+                r1_found = True
+        elif not r2_found:
+            range2 += element
+            if isinstance(range2, int):
+                # print(f"range 2 is int, found '{range2}'")
+                r2_found = True
+            elif len(range2) > 1 and range2.endswith(delimiter):
+                # print(f"range 2 found '{range2}'")
+                r2_found = True
+    # print(f"Range 1 is: '{range1}', range 2 is: '{range2}'")
+    return (range1, range2)
+
+def get_commands(list_of_commands):
+    '''
+    Categorise incoming commands and format the commands if the commands have:
+        operate_address or operate_target or operate_condition or operate_replace (for s)
+    and add the elements into corresponding dictionaries.
+    '''
+    all_cmd = []
+    special_notations=("?", "\\")
+    for command in list_of_commands:
+        if command[-1] in ["d","p","q"]:
+            operate_address_start   = -1
+            operate_address_end     = -1
+            operate_target  = None
+            delimiter       = command[0]
+            operate_type    = command[-1]
+            # If the command does not contain regex, then the first letter is an integer
+            try:
+                delimiter = int(delimiter)
+            except:
+                pass
+            if "," in command:
+                partial_commands = command.split(',')
+                if len(partial_commands) > 2:
+                    # If the first letter is integer then if there exists a regex, it's the thing after comma
+                    first = ""
+                    try:
+                        first = int[command[0]]
+                    except:
+                        delimiter = partial_commands[0][0]
+                    if isinstance(first, int):
+                        delimiter = partial_commands[1][0]
+                    operate_address_start, operate_address_end = find_range(partial_commands, delimiter)
+                else:
+                    operate_address_start, operate_address_end = partial_commands[0], partial_commands[1][:-1]
+            else:
+                # If the command begins with "$", then it refers to last line
+                if delimiter == "$":
+                    operate_address_start = "$"
+                # If the first letter is not an integer, then it is a regex
+                elif not isinstance(delimiter, int):
+                    operate_target = re.split(delimiter, command)[1]
+                # If the first letter is an integer, then the target address is the the whole cmd string except the last letter
+                else:
+                    operate_address_start = int(command[:-1])
+            all_cmd.append(
+                {
+                    'operate_address_start' : operate_address_start,
+                    'operate_address_end'   : operate_address_end,
+                    'operate_target'   : operate_target,
+                    'operation_type'   : operate_type,
+                    'operate_restriction'   : False
+                }
+            )
+        else:
+            end_of_address = 0
+            delimiter = ""
+            # See if sub is applied to a match or a match with a restriction
+            for count, letter in enumerate(command):
+                # If the letter is s then if anything occurs before s,
+                # That's the restriction
+                if letter == "s":
+                    delimiter = command[count+1]
+                    end_of_address = count
+                    break
+                # If the restriction is an integer address
+                try:
+                    letter = int(letter)
+                # If the restriction is a regex
+                except:
+                    delimiter = letter
+                    end_of_address = count
+                    break
+            # If there is anything before s, then the replace pattern and replace string occurs after s
+            if end_of_address != 0:
+                # command becomes [before 's']     + delimiter + command ['s' onwards]
+                command = command[:end_of_address] + delimiter + command[end_of_address:]
+            if delimiter in special_notations:
+                delimiter = '\\'+delimiter
+            splited = re.split(delimiter, command)
+            operate_address_start = int(-1)
+            operate_address_end = int(-1)
+            operate_condition = None
+            operate_target = ""
+            operate_replace = ""
+            if delimiter == "$":
+                operate_address_start = "$"
+            if "s" == splited[0]:
+                operate_target = splited[1]
+                operate_replace = splited[2]
+            elif "s" == splited[1]:
+                operate_address_start = splited[0]
+                operate_target = splited[2]
+                operate_replace = splited[3]
+            elif "s" == splited[2]:
+                operate_condition = splited[1]
+                operate_target = splited[3]
+                operate_replace = splited[4]
+                # If "," appears, it's in the condition / resctriction section
+                if "," in operate_condition:
+                    pass
+            replace_all = False
+            if "g" == splited[-1]:
+                replace_all = True
+            all_cmd.append(
+                {
+                    'operate_address_start' : operate_address_start,
+                    'operate_address_end'   : operate_address_end,
+                    'operate_condition' : operate_condition,
+                    'operate_target'    : operate_target,
+                    'operate_replace'   : operate_replace,
+                    'replace_all'   : replace_all,
+                    'operate_restriction'   : False,
+                    'operation_type'    : "s"
+                }
+            )
+    return all_cmd
+
+def operate(input_line, address, command, next_line):
+    '''Base on the address, command and the situation of next_line, apply modification to the input_line correspondingly.
+
+    arguments:
+        input_line (str):   the line that the main loop iteration is up to, 
+                            possibly modified by previous commands already.
+        address    (int):   the address of the current line.
+        command    (str):   the command in the format organised by get_commands().
+        next_line  (str):   the line after input_line.
+    
+    return:
+        input_line (str):   same as above.
+        None      (None): if the input is None or if the current line is deleted.
+        True      (bool): if the input matches the quit condition and the program will terminate.
+        re.sub(...)(str): if the input is modified by substitute command.
+    '''
+
+    if input_line == None:
+        return None
+
+    mode = command['operation_type']
+    operate_target = command['operate_target']
+    operate_address_start = command['operate_address_start']
+    operate_address_end = command['operate_address_end']
+    end_is_int = False
+    in_the_range = command['operate_restriction']
+    regex_start = None
+    regex_end = None
+
+    # If either of the range is int, transfer its type.
+    try:
+        operate_address_start = int(operate_address_start)
+    except:
+        pass
+    try:
+        # If end is int and not larger than start, let end equals start to handle start >= end situation.
+        operate_address_end = int(operate_address_end)
+        end_is_int = True
+        if operate_address_end < operate_address_start:
+            operate_address_end = operate_address_start
+    except:
+        pass
+
+    # If either of the range is str, remove the delimiters.
+    if isinstance(operate_address_start, str):
+        regex_start = operate_address_start[1:-1]
+    if isinstance(operate_address_end, str):
+        regex_end = operate_address_end[1:-1]
+        
+
+    # If $ is the operate address, it refers to the last line. (Not considering $ as the a regex, i.e. /$/)
+    if "$" == operate_address_start:
+        if next_line == "":
+            if mode == "d":
+                return None
+            elif mode == "p":
+                print(input_line, end = '')
+            elif mode == "q":
+                return True
+            elif mode == "s":
+                operate_replace = command['operate_replace']
+                sub_count = 1
+                if command['replace_all']:
+                    sub_count = 0
+                return re.sub(operate_target, operate_replace, input_line, sub_count)
+    # If in the range
+    elif in_the_range:
+        # Case: start, address_int
+        if isinstance(operate_address_end, int):
+            if operate_address_end == address:
+                command['operate_restriction'] = False
+        # Case: start, /address_regex/
+        else:
+            if re.search(regex_end, input_line) != None:
+                command['operate_restriction'] = False
+        if mode == "d":
+            return None
+        elif mode == "p":
+            print(input_line, end = '')
+        elif mode == "q":
+            return True
+        elif mode == "s":
+            operate_replace = command['operate_replace']
+            sub_count = 1
+            if  command['replace_all']:
+                sub_count = 0
+            return re.sub(operate_target, operate_replace, input_line, sub_count)
+    # start_address is represented by a regex
+    elif isinstance(operate_address_start, str):
+        if re.search(regex_start, input_line) != None:
+            command['operate_restriction'] = True
+            if mode == "d":
+                return None
+            elif mode == "p":
+                print(input_line, end = '')
+            elif mode == "q":
+                return True
+            elif mode == "s":
+                operate_replace = command['operate_replace']
+                sub_count = 1
+                if command['replace_all']:
+                    sub_count = 0
+                return re.sub(operate_target, operate_replace, input_line, sub_count)
+    # Case: start_int, end_int
+    elif int(address) == int(operate_address_start) or end_is_int and int(address) in range(int(operate_address_start), operate_address_end + 1):
+        # If end == -1, then it isn't a range, just standard address
+        # If end == start, then only the current line needs modification
+        # Either case, in_range is not turned on
+        if command['operate_address_end'] != -1 and command['operate_address_end'] != command['operate_address_start']:
+            command['operate_restriction'] = True
+        if mode == "d":
+            return None
+        elif mode == "p":
+            print(input_line, end = '')
+        elif mode == "q":
+            return True
+        elif mode == "s":
+            operate_replace = command['operate_replace']
+            sub_count = 1
+            if command['replace_all']:
+                sub_count = 0
+            return re.sub(operate_target, operate_replace, input_line, sub_count)
+    # Case: No address before command
+    elif int(operate_address_start) == -1 and mode == "s":
+        operate_condition = command['operate_condition']
+        operate_replace = command['operate_replace']
+        sub_count = 1
+        operate = False
+        if command['replace_all']:
+            sub_count = 0
+        if operate_condition != None and re.search(operate_condition, input_line) != None:
+            operate = True
+        elif operate_condition == None and re.search(operate_target, input_line) != None:
+            operate = True
+        if operate:
+            return re.sub(operate_target, operate_replace, input_line, sub_count)
+    # Case: operation apply to regex_matched string
+    elif operate_target != None and re.search(operate_target, input_line) != None:
+        if mode == "d":
+            return None
+        elif mode == "p":
+            print(input_line, end = '')
+        elif mode == "q":
+            return True
+    #  condition match case?
+    # if command['operate_restriction']:
+    #     if end_is_int:
+    #         if int(address) == operate_address_end:
+    #             command['operate_restriction'] = False
+
+    return input_line
+
+if __name__ == "__main__":
+    error_check("usage", sys.argv)
+    # Obtain all inputs including flags, direct commands / command file, input files
+    all_inputs  = sys.argv[1:]
+    # All flags, assume valid, starts with "-"
+    flags       = [ i for i  in all_inputs if i.startswith('-')] # from https://stackoverflow.com/questions/44517191/how-to-find-the-python-list-item-that-start-with
+    # Assuming the usage is followed, then the commands is always the first element of the rest of the inputs
+    commands    = [[ i for i in all_inputs if i not in flags][0]]
+    input_files = [ i for i in all_inputs if i not in flags and i not in commands]
+    if "-f" in flags:
+        f = open(commands[0], 'r')
+        commands = [f.read()]
+        f.close()
+    command_separators = ";\n"
+    list_of_commands = list(filter(None, re.split("[;\n]", commands[0])))
+    all_cmd = get_commands(list_of_commands)
+    # Reading input sources from either stdin or input files,
+    input_sources = None
+    address = 0
+    to_quit = False
+    next_line = ""
+    # In the latter case, the size of the list containing all input files > 1
+    if len(input_files) > 0:
+        input_sources = input_files
+    # Otherwise we read from stdin
+    else:
+        input_sources = [sys.stdin]
+    # To handle both the case of reading from
+    #   1. a list of input files or
+    #   2. stdin
+    # We organise the sources as a list of files, where the files can be actual files or stdin
+    for file_unopened in input_sources:
+        file = None
+        try:
+            file = open(file_unopened, 'r')
+        except:
+            file = file_unopened
+        # Since the input size can be infinte, we read input lines one by one
+        line = file.readline()
+        # Two cases for stop reading the current file:
+        # 1. the file does not exist (line == None) case, which causes error
+        # 2. line == "", suggesting EOF, which is handles later in the loop
+        while True and line != None:
+            address += 1
+            modified = line
+            next_line = file.readline()
+            for cmd in all_cmd:
+                outcome = operate(modified, address, cmd, next_line)
+                if outcome == None:
+                    modified = outcome
+                elif outcome == True:
+                    to_quit = outcome
+                    break
+                elif isinstance(outcome, str):
+                    modified = outcome
+            if "-n" not in flags:
+                if modified != None:
+                    print(modified, end='')
+            # Maybe EOF
+            if next_line == "":
+                break
+            # Quiting
+            if to_quit:
+                sys.exit(0)
+            line = next_line
+        file.close()
+ 
